@@ -28,7 +28,7 @@ public class ProductServiceTest {
 
         RawMaterial wood = new RawMaterial();
         wood.name = "Wood";
-        wood.stockQuantity = 1000;
+        wood.stockQuantity = 100;
         wood.persist();
 
         Product table = new Product();
