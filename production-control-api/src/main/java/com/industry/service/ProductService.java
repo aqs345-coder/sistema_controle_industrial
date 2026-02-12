@@ -64,6 +64,7 @@ public class ProductService {
 
                 for (ProductComposition item : productRecipe) {
                     int currentStock = tempStock.getOrDefault(item.rawMaterial.id, 0);
+                    if (item.requiredQuantity == 0) continue;
                     int canMake = currentStock / item.requiredQuantity;
                     maxPossible = Math.min(maxPossible, canMake);
                 }

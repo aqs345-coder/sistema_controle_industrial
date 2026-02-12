@@ -27,7 +27,7 @@ public class ProductResource {
     }
 
     @POST
-    @path("/{id}/composition")
+    @Path("/{id}/composition")
     public void addComposition(@PathParam("id") Long id, 
                                @QueryParam("materialId") Long materialId, 
                                @QueryParam("quantity") Integer quantity) {
