@@ -22,7 +22,7 @@ function App() {
           <Button color="inherit" onClick={() => setCurrentScreen('products')}>
             Products & Recipes
           </Button>
-          <Button color="inherit" onClick={() => alert("Em breve: Cálculo de Produção")}>
+          <Button color="inherit" onClick={() => alert("Coming Soon")}>
             Calculate Production
           </Button>
         </Toolbar>
