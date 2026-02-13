@@ -1,19 +1,24 @@
 package com.industry.service;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import com.industry.dto.MaterialUsageDTO;
+import com.industry.dto.ProductionPlanResponse;
+import com.industry.dto.ProductionSuggestionDTO;
 import com.industry.model.Product;
 import com.industry.model.ProductComposition;
 import com.industry.model.RawMaterial;
-import com.industry.dto.ProductionSuggestionDTO;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
-import java.util.*;
+import jakarta.ws.rs.WebApplicationException;
 
 @ApplicationScoped
 public class ProductService {
-    
-    public List<Product> listAll() {
-        return Product.listAll();
-    }
 
     @Transactional
     public Product create(Product product) {
@@ -21,69 +26,94 @@ public class ProductService {
         return product;
     }
 
-    // Method to add composition (recipe for a product)
-    @Transactional
-    public void addComposition(Long productId, Long rawMaterialId, Integer quantity) {
-        Product product = Product.findById(productId);
-        RawMaterial material = RawMaterial.findById(rawMaterialId);
-
-        if (product == null || material == null) {
-            throw new RuntimeException("Product or Material not found");
-        }
-
-        ProductComposition composition = new ProductComposition();
-        composition.product = product;
-        composition.rawMaterial = material;
-        composition.requiredQuantity = quantity;
-        composition.persist();
+    public List<Product> listAll() {
+        return Product.listAll();
     }
 
-    // Greedy Algorithm
-    public List<ProductionSuggestionDTO> calculateProduction() {
+    @Transactional
+    public void addComposition(Long productId, Long materialId, Integer quantity) {
+        long count = ProductComposition.count("product.id = ?1 and rawMaterial.id = ?2", productId, materialId);
+        if (count > 0) {
+            throw new WebApplicationException("This ingredient is already linked to the product.", 409);
+        }
+
+        Product product = Product.findById(productId);
+        RawMaterial material = RawMaterial.findById(materialId);
+
+        if (product != null && material != null) {
+            ProductComposition composition = new ProductComposition();
+            composition.product = product;
+            composition.rawMaterial = material;
+            composition.quantity = quantity;
+            composition.persist();
+        } else {
+             throw new WebApplicationException("Product or Material not found.", 404);
+        }
+    }
+
+    public ProductionPlanResponse calculateProduction() {
         List<Product> products = Product.listAll();
-        List<ProductComposition> compositions = ProductComposition.listAll();
         List<RawMaterial> materials = RawMaterial.listAll();
 
         Map<Long, Integer> tempStock = new HashMap<>();
+        Map<Long, String> materialNames = new HashMap<>();
+        Map<Long, Integer> initialStock = new HashMap<>();
+
         for (RawMaterial rm : materials) {
             tempStock.put(rm.id, rm.stockQuantity);
+            initialStock.put(rm.id, rm.stockQuantity);
+            materialNames.put(rm.id, rm.name);
         }
 
-        products.sort((p1, p2) -> p2.value.compareTo(p1.value));
+        products.sort(Comparator.comparing((Product p) -> p.value).reversed());
 
         List<ProductionSuggestionDTO> suggestions = new ArrayList<>();
+        double totalRevenue = 0.0;
 
         for (Product product : products) {
-            List<ProductComposition> productRecipe = compositions.stream()
-                    .filter(c -> c.product.id.equals(product.id))
-                    .toList();
+            if (product.composition == null || product.composition.isEmpty()) continue;
 
-                if (productRecipe.isEmpty()) continue;
+            int maxPossible = Integer.MAX_VALUE;
 
-                int maxPossible = Integer.MAX_VALUE;
+            for (ProductComposition comp : product.composition) {
+                int available = tempStock.getOrDefault(comp.rawMaterial.id, 0);
+                int canMake = available / comp.quantity;
+                maxPossible = Math.min(maxPossible, canMake);
+            }
 
-                for (ProductComposition item : productRecipe) {
-                    int currentStock = tempStock.getOrDefault(item.rawMaterial.id, 0);
-                    if (item.requiredQuantity == 0) continue;
-                    int canMake = currentStock / item.requiredQuantity;
-                    maxPossible = Math.min(maxPossible, canMake);
+            if (maxPossible > 0) {
+                ProductionSuggestionDTO dto = new ProductionSuggestionDTO();
+                dto.productName = product.name;
+                dto.quantity = maxPossible;
+                dto.totalValue = maxPossible * product.value;
+                suggestions.add(dto);
+
+                totalRevenue += dto.totalValue;
+
+                for (ProductComposition comp : product.composition) {
+                    Long matId = comp.rawMaterial.id;
+                    int current = tempStock.get(matId);
+                    tempStock.put(matId, current - (comp.quantity * maxPossible));
                 }
-
-                if (maxPossible > 0) {
-                    suggestions.add(new ProductionSuggestionDTO(
-                        product.name,
-                        maxPossible,
-                        maxPossible * product.value
-                    ));
-
-                    for (ProductComposition item : productRecipe) {
-                        int consumed = maxPossible * item.requiredQuantity;
-                        Long matId = item.rawMaterial.id;
-                        tempStock.put(matId, tempStock.get(matId) - consumed);
-                    }
-                }
+            }
         }
-        
-        return suggestions;
+
+        List<MaterialUsageDTO> usageReport = new ArrayList<>();
+        for (Long matId : initialStock.keySet()) {
+            int start = initialStock.get(matId);
+            int end = tempStock.get(matId);
+            int used = start - end;
+            
+            if (used > 0) {
+                usageReport.add(new MaterialUsageDTO(materialNames.get(matId), used, end));
+            }
+        }
+
+        ProductionPlanResponse response = new ProductionPlanResponse();
+        response.suggestions = suggestions;
+        response.materialUsage = usageReport;
+        response.totalRevenue = totalRevenue;
+
+        return response;
     }
 }
