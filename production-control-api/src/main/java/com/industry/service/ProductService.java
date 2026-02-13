@@ -1,7 +1,6 @@
 package com.industry.service;
 
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +50,19 @@ public class ProductService {
         }
     }
 
+    private double efficiencyCalculator(Product product) {
+        if (product.composition == null || product.composition.isEmpty()) {
+            return 0.0;
+        }
+        
+        int totalMaterials = 0;
+        for (ProductComposition comp : product.composition) {
+            totalMaterials += comp.quantity;
+        }
+        
+        return totalMaterials > 0 ? product.value / totalMaterials : 0.0;
+    }
+
     public ProductionPlanResponse calculateProduction() {
         List<Product> products = Product.listAll();
         List<RawMaterial> materials = RawMaterial.listAll();
@@ -65,8 +77,12 @@ public class ProductService {
             materialNames.put(rm.id, rm.name);
         }
 
-        products.sort(Comparator.comparing((Product p) -> p.value).reversed());
-
+        products.sort((p1, p2) -> {
+                double eficiencia1 = efficiencyCalculator(p1);
+                double eficiencia2 = efficiencyCalculator(p2);
+                return Double.compare(eficiencia2, eficiencia1); 
+                });
+                
         List<ProductionSuggestionDTO> suggestions = new ArrayList<>();
         double totalRevenue = 0.0;
 
