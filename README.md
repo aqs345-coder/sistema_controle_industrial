@@ -59,18 +59,20 @@ O projeto conta com um layout moderno **Full-Screen**:
 
 ## 📐 Detalhes da Arquitetura
 
-Estrutura de Pastas
+### Estrutura de Pastas
+```text
 /
-├── docker-compose.yaml        # PostgreSQL
-├── production-control-api/    # Quarkus App
-│   ├── src/main/java/com/industry/
-│   │   ├── model/             # Entidades (Product, RawMaterial)
-│   │   ├── dto/               # Objetos de Transferência (ProductionPlanResponse)
-│   │   ├── resource/          # Controllers REST
-│   │   └── service/           # Regras de Negócio e Algoritmo
-└── production-control-front/  # React App
-    └── src/components/        # Telas (Manager, Calculator, Dashboard)
-
+├── docker-compose.yaml         # Configuração do Banco de Dados
+├── production-control-api/     # Backend (Quarkus)
+│   └── src/main/java/com/industry/
+│       ├── model/              # Entidades (Product, RawMaterial)
+│       ├── dto/                # Transferência de Dados (Requests/Responses)
+│       ├── resource/           # Controllers REST (API Endpoints)
+│       └── service/            # Regras de Negócio e Algoritmos
+└── production-control-front/   # Frontend (React)
+    └── src/
+        ├── components/         # Telas (Manager, Dashboard, Calculator)
+        └── services/           # Configuração do Axios (API)
 ---
 
 ## 📝 Licença
