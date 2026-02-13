@@ -73,6 +73,8 @@ O projeto conta com um layout moderno **Full-Screen**:
     └── src/
         ├── components/         # Telas (Manager, Dashboard, Calculator)
         └── services/           # Configuração do Axios (API)
+```
+
 ---
 
 ## 📝 Licença
