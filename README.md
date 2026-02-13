@@ -4,6 +4,12 @@ Um sistema **Full-Stack** robusto para planejamento e controle de produção ind
 
 ![Status](https://img.shields.io/badge/Status-Completed-success) ![Java](https://img.shields.io/badge/Java-17-orange) ![React](https://img.shields.io/badge/React-18-blue)
 
+<span>
+    <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/f46b2c3d-4ad6-4482-9ede-e72723990cf1" />
+    <img width="1920" height="1080" alt="image" src="https://github.com/user-attachments/assets/8cea1bf9-06f0-4a73-a2cf-90c85b903a35" />
+</span>
+
+
 ## 🚀 Tecnologias Utilizadas
 
 ### Backend (API REST)
